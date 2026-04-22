@@ -234,7 +234,7 @@ with left:
                 "Guarantee 10-year workmanship guarantee."))
         if st.button("✨ Process with AI"):
             
-                st.error("Please enter your Anthropic API key.")
+                
             if not dictation.strip():
                 st.error("Please enter your dictation.")
             else:
