@@ -70,14 +70,17 @@ def unpack_docx(docx_path, out_dir):
         _pretty_print_xml(xml_file)
 
 def pack_docx(in_dir, out_path):
-    for f in Path(in_dir).rglob('*.xml'):
+    in_path = Path(in_dir)
+    for f in in_path.rglob('*.xml'):
         _condense_xml(f)
-    for f in Path(in_dir).rglob('*.rels'):
+    for f in in_path.rglob('*.rels'):
         _condense_xml(f)
+    all_files = [f for f in in_path.rglob('*') if f.is_file()]
+    content_types = [f for f in all_files if f.name == '[Content_Types].xml']
+    others = [f for f in all_files if f.name != '[Content_Types].xml']
     with zipfile.ZipFile(out_path, 'w', zipfile.ZIP_DEFLATED) as zf:
-        for f in Path(in_dir).rglob('*'):
-            if f.is_file():
-                zf.write(f, f.relative_to(in_dir))
+        for f in content_types + others:
+            zf.write(f, f.relative_to(in_path))
 
 def find_para_with(root, placeholder):
     for p in root.iter(f'{{{W}}}p'):
