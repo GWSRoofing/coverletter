@@ -233,7 +233,7 @@ with left:
                 "New paragraph Relay in plain tile throughout.\n"
                 "Guarantee 10-year workmanship guarantee."))
         if st.button("✨ Process with AI"):
-            if not api_key:
+            
                 st.error("Please enter your Anthropic API key.")
             elif not dictation.strip():
                 st.error("Please enter your dictation.")
