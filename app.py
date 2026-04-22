@@ -183,7 +183,7 @@ def build_docx(fields, estimator_name):
 def process_with_ai(text, api_key):
     client = anthropic.Anthropic(api_key=api_key)
     response = client.messages.create(
-        model='claude-sonnet-4-20250514', max_tokens=1000,
+        model='claude-sonnet-4-5', max_tokens=1000,
         system=AI_SYSTEM,
         messages=[{'role':'user', 'content': f'Dictated text:\n{text}'}]
     )
