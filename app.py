@@ -235,7 +235,7 @@ with left:
         if st.button("✨ Process with AI"):
             
                 st.error("Please enter your Anthropic API key.")
-            elif not dictation.strip():
+            if not dictation.strip():
                 st.error("Please enter your dictation.")
             else:
                 with st.spinner("AI is processing your dictation…"):
