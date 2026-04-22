@@ -197,12 +197,11 @@ for k in ['fields','confirmed','docx_bytes','filename']:
     if k not in st.session_state:
         st.session_state[k] = None
 
-st.markdown("""
-<div class="gws-header">
-  <span class="gws-logo">GWS</span>
-  <span class="gws-title">GWS Roofing — Cover Letter Generator</span>
-</div>
-""", unsafe_allow_html=True)
+col_logo, col_title = st.columns([1, 4])
+with col_logo:
+    st.image("GWS Roofing Logo.jpg", width=180)
+with col_title:
+    st.markdown("<h2 style='color:#1a2744; font-family:Libre Baskerville,serif; padding-top:18px;'>Cover Letter Generator</h2>", unsafe_allow_html=True)
 
 left, right = st.columns([1,1], gap='large')
 
