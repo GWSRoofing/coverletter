@@ -208,7 +208,7 @@ left, right = st.columns([1,1], gap='large')
 
 with left:
     st.markdown("#### Letter Details")
-    api_key = st.text_input("Anthropic API Key", type="password",
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
         placeholder="sk-ant-...",
         help="Enter your Anthropic API key — only stored for this session")
     st.divider()
