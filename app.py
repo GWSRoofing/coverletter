@@ -76,6 +76,7 @@ def pack_docx(in_dir, out_path):
     for f in in_path.rglob('*.rels'):
         _condense_xml(f)
     all_files = [f for f in in_path.rglob('*') if f.is_file()]
+    # [Content_Types].xml must be first entry in the zip for Word compatibility
     content_types = [f for f in all_files if f.name == '[Content_Types].xml']
     others = [f for f in all_files if f.name != '[Content_Types].xml']
     with zipfile.ZipFile(out_path, 'w', zipfile.ZIP_DEFLATED) as zf:
@@ -197,30 +198,28 @@ for k in ['fields','confirmed','docx_bytes','filename']:
     if k not in st.session_state:
         st.session_state[k] = None
 
-col_logo, col_title = st.columns([1, 4])
-with col_logo:
-    st.image("GWS Roofing Logo.jpg", width=180)
-with col_title:
-    st.markdown("<h2 style='color:#1a2744; font-family:Libre Baskerville,serif; padding-top:18px;'>Cover Letter Generator</h2>", unsafe_allow_html=True)
+st.markdown("""
+<div class="gws-header">
+  <span class="gws-logo">GWS</span>
+  <span class="gws-title">GWS Roofing — Cover Letter Generator</span>
+</div>
+""", unsafe_allow_html=True)
 
 left, right = st.columns([1,1], gap='large')
 
 with left:
     st.markdown("#### Letter Details")
-    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    api_key = st.text_input("Anthropic API Key", type="password",
+        placeholder="sk-ant-...",
+        help="Enter your Anthropic API key — only stored for this session")
     st.divider()
     mode = st.radio("Input method",
-        ["📝 Paste / type dictation", "✏️ Fill fields manually"],
+        ["🎤 Dictate", "✏️ Fill fields manually"],
         horizontal=True, label_visibility="collapsed")
     st.divider()
 
-    if mode == "📝 Paste / type dictation":
-        st.markdown("""<div class="hint-box">
-        Dictate or type naturally using field names as cues:<br>
-        <strong>Date · Client name · Client email · Site address · Dear ·
-        Scope of works · Works description · Guarantee (optional)</strong><br>
-        Say <strong>"new paragraph"</strong> to split the Works Description.
-        </div>""", unsafe_allow_html=True)
+    if mode == "🎤 Dictate":
+
         estimator = st.selectbox("Estimator", list(ESTIMATORS.keys()))
         dictation = st.text_area("Dictation", height=260, label_visibility="collapsed",
             placeholder=(
@@ -233,9 +232,9 @@ with left:
                 "New paragraph Relay in plain tile throughout.\n"
                 "Guarantee 10-year workmanship guarantee."))
         if st.button("✨ Process with AI"):
-            
-                
-            if not dictation.strip():
+            if not api_key:
+                st.error("Please enter your Anthropic API key.")
+            elif not dictation.strip():
                 st.error("Please enter your dictation.")
             else:
                 with st.spinner("AI is processing your dictation…"):
