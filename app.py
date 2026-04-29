@@ -209,8 +209,7 @@ left, right = st.columns([1,1], gap='large')
 with left:
     st.markdown("#### Letter Details")
     api_key = os.environ.get("ANTHROPIC_API_KEY", "")
-        placeholder="sk-ant-...",
-        help="Enter your Anthropic API key — only stored for this session")
+        
     st.divider()
     mode = st.radio("Input method",
         ["🎤 Dictate", "✏️ Fill fields manually"],
