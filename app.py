@@ -207,7 +207,7 @@ left, right = st.columns([1,1], gap='large')
 
 with left:
     st.markdown("#### Letter Details")
-    api_key = st.secrets.get("ANTHROPIC_API_KEY", "")
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
     st.divider()
     mode = st.radio("Input method",
         ["📝 Paste / type dictation", "✏️ Fill fields manually"],
