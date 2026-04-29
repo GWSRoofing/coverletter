@@ -221,14 +221,14 @@ with left:
         estimator = st.selectbox("Estimator", list(ESTIMATORS.keys()))
         dictation = st.text_area("Dictation", height=260, label_visibility="collapsed",
             placeholder=(
-                "Date 22nd April 2026\nClient name Mr John Smith\n"
-                "Client email john@example.com\n"
-                "Site address 12 Oak Lane, London W5 3AB\nDear Mr Smith\n"
-                "Scope of works Full re-roof in plain concrete tile\n"
-                "Works description Strip all existing coverings. "
-                "New paragraph Install breathable membrane. "
-                "New paragraph Relay in plain tile throughout.\n"
-                "Guarantee 10-year workmanship guarantee."))
+                "Date — Any format, AI converts to DD/MM/YYYY\n"
+                "Client name — Full name/s, with title where appropriate (Mr/Mrs/Miss/Ms)\n"
+                "Client email — Spell out if unusual\n"
+                "Site address — Include postcode\n"
+                "Dear — First name only (e.g. \"Dear Daniel\")\n"
+                "Scope of works — Headline description of areas covered\n"
+                "Works description — Main body of letter. Say \"new paragraph\" to split sections.\n"
+                "Guarantee — Only mention if applicable"))
         if st.button("✨ Process with AI"):
             if not api_key:
                 st.error("Please enter your Anthropic API key.")
