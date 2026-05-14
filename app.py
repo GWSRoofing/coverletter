@@ -15,35 +15,34 @@ st.markdown("""
 html, body, [class*="css"] { font-family: 'Source Sans 3', sans-serif; }
 
 .block-container {
-    padding-top: 1.5rem !important;
+    padding-top: 2.5rem !important;
     padding-left: 3rem !important;
     padding-right: 3rem !important;
+    max-width: 100% !important;
 }
 
-/* Title */
 .app-title {
     font-family: 'Source Sans 3', sans-serif;
     font-size: 2rem;
     font-weight: 700;
     color: #1a2744;
     margin: 0;
-    padding: 0;
+    padding-top: 28px;
+    padding-left: 0;
     line-height: 1.2;
+    display: block;
 }
 
-/* Field labels */
 .field-label {
     font-size: 0.7rem;
     font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: #6b7280;
-    margin-bottom: 6px;
-    margin-top: 0;
+    margin-bottom: 4px;
     display: block;
 }
 
-/* Preview box */
 .preview-box {
     background: #f8f9fb;
     border: 1px solid #e2e4e8;
@@ -67,14 +66,10 @@ html, body, [class*="css"] { font-family: 'Source Sans 3', sans-serif; }
 
 .preview-site { font-weight: 700; text-decoration: underline; }
 
-/* Divider */
-.divider {
-    border: none;
-    border-top: 1px solid #e5e7eb;
-    margin: 12px 0 20px 0;
-}
+.divider { border: none; border-top: 1px solid #e5e7eb; margin: 16px 0 24px 0; }
+.section-divider { border: none; border-top: 1px solid #e5e7eb; margin: 16px 0; }
 
-/* Buttons — match quote generator exactly */
+/* Buttons */
 .stButton > button {
     background: #1a2744 !important;
     color: white !important;
@@ -86,10 +81,9 @@ html, body, [class*="css"] { font-family: 'Source Sans 3', sans-serif; }
     padding: 12px 20px !important;
     width: 100% !important;
 }
-
 .stButton > button:hover { background: #243456 !important; }
 
-/* Input labels */
+/* Labels */
 .stSelectbox > label,
 .stTextArea > label,
 .stTextInput > label {
@@ -100,14 +94,11 @@ html, body, [class*="css"] { font-family: 'Source Sans 3', sans-serif; }
     color: #6b7280 !important;
 }
 
-/* Text area and select styling */
-div[data-testid="stTextArea"] textarea,
-div[data-testid="stTextInput"] input {
+div[data-testid="stTextArea"] textarea {
     font-family: 'Source Sans 3', sans-serif !important;
     font-size: 0.88rem !important;
     border-color: #e2e4e8 !important;
     border-radius: 5px !important;
-    color: #374151 !important;
 }
 
 div[data-testid="stSelectbox"] > div > div {
@@ -115,11 +106,6 @@ div[data-testid="stSelectbox"] > div > div {
     border-radius: 5px !important;
     font-size: 0.88rem !important;
 }
-
-/* Remove extra spacing */
-div[data-testid="stVerticalBlock"] > div { gap: 0.4rem; }
-
-.section-divider { border: none; border-top: 1px solid #e5e7eb; margin: 14px 0; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -230,7 +216,6 @@ def build_docx(fields, estimator_name):
         doc_path = os.path.join(work_dir, 'word', 'document.xml')
         tree = etree.parse(doc_path)
         root = tree.getroot()
-
         simple = {
             '#Initials/Ali':                est['initials'] + '/Ali',
             '#Date ':                       fields['date'] + ' ',
@@ -247,13 +232,11 @@ def build_docx(fields, estimator_name):
                     t_elem.text = t_elem.text.replace(ph, val)
                     if val.endswith(' ') or val.startswith(' '):
                         t_elem.set('{http://www.w3.org/XML/1998/namespace}space', 'preserve')
-
         p_site = find_para_with(root, '#Site Address')
         if p_site is not None:
             for t in p_site.iter(f'{{{W}}}t'):
                 if '#Site Address' in (t.text or ''):
                     t.text = fields['siteAddress']
-
         p_works = find_para_with(root, '#Works description')
         if p_works is not None:
             works_paras = [p.strip() for p in fields['worksDescription'] if p.strip()]
@@ -266,7 +249,6 @@ def build_docx(fields, estimator_name):
                 idx = list(parent).index(p_works)
                 for i, pt in enumerate(works_paras[1:], 1):
                     parent.insert(idx + i, make_works_para(p_works, pt))
-
         p_guar = find_para_with(root, '#Guarantee')
         if p_guar is not None:
             guarantee = (fields.get('guarantee') or '').strip()
@@ -276,7 +258,6 @@ def build_docx(fields, estimator_name):
                         t.text = guarantee
             else:
                 p_guar.getparent().remove(p_guar)
-
         tree.write(doc_path, xml_declaration=True, encoding='UTF-8', standalone=True)
         out_path = os.path.join(work_dir, 'output.docx')
         pack_docx(work_dir, out_path)
@@ -323,30 +304,26 @@ for k in ['fields', 'docx_bytes', 'filename']:
 api_key = os.environ.get("ANTHROPIC_API_KEY", "")
 today = date.today().strftime('%d/%m/%Y')
 
-# ── Header ────────────────────────────────────────────────────────────────────
+# ── Header — logo left, title centre-right ────────────────────────────────────
 col_logo, col_title = st.columns([1, 3])
 with col_logo:
-    st.image("GWS Roofing Logo.jpg", width=130)
+    st.image("GWS Roofing Logo.jpg", width=160)
 with col_title:
-    st.markdown("<p class='app-title'>Cover Letter Generator</p>", unsafe_allow_html=True)
+    st.markdown("<span class='app-title'>Cover Letter Generator</span>", unsafe_allow_html=True)
 
 st.markdown("<hr class='divider'>", unsafe_allow_html=True)
 
-# ── Main layout ───────────────────────────────────────────────────────────────
+# ── Two column layout ─────────────────────────────────────────────────────────
 left, right = st.columns([1, 1], gap='large')
+
+DICT_HEIGHT = 330
 
 with left:
     st.markdown("<span class='field-label'>Estimator</span>", unsafe_allow_html=True)
-    estimator = st.selectbox("Estimator", list(ESTIMATORS.keys()),
-                             label_visibility="collapsed")
+    estimator = st.selectbox("Estimator", list(ESTIMATORS.keys()), label_visibility="collapsed")
 
     st.markdown("<span class='field-label'>Dictation</span>", unsafe_allow_html=True)
-
-    # Calculate preview height to match right column
-    # Base dictation box height
-    dict_height = 310
-
-    dictation = st.text_area("Dictation", height=dict_height, label_visibility="collapsed",
+    dictation = st.text_area("Dictation", height=DICT_HEIGHT, label_visibility="collapsed",
         placeholder=(
             "Client name — Full name/s, with title where appropriate (Mr/Mrs/Miss/Ms)\n"
             "Client email — Spell out if unusual\n"
@@ -356,7 +333,8 @@ with left:
             "Works description — Main body of letter. Say \"new paragraph\" to split sections.\n"
             "Guarantee — Only mention if applicable"))
 
-    col_process, col_reset = st.columns(2)
+    # Buttons: ~4/5 and ~1/5 width
+    col_process, col_reset = st.columns([4, 1])
     with col_process:
         process_btn = st.button("Process with AI", key="process")
     with col_reset:
@@ -389,33 +367,22 @@ with left:
         f = st.session_state.fields
         st.markdown("<hr class='section-divider'>", unsafe_allow_html=True)
 
-        def field_height(text, min_h=68):
-            chars = len(text or '')
-            rows = max(1, chars // 55 + 1)
-            return max(min_h, rows * 28 + 20)
+        def fh(text, min_h=68):
+            return max(min_h, (len(text or '') // 55 + 1) * 28 + 20)
 
-        client_name  = st.text_area("Client name",
-            value=f.get('clientName',''), height=field_height(f.get('clientName','')), key="e_cn")
-        client_email = st.text_area("Client email",
-            value=f.get('clientEmail',''), height=field_height(f.get('clientEmail','')), key="e_ce")
-        site_address = st.text_area("Site address",
-            value=f.get('siteAddress',''), height=field_height(f.get('siteAddress','')), key="e_sa")
-        dear         = st.text_area("Dear",
-            value=f.get('dear',''), height=field_height(f.get('dear','')), key="e_dr")
-        scope        = st.text_area("Scope of works",
-            value=f.get('scope',''), height=field_height(f.get('scope','')), key="e_sc")
+        client_name  = st.text_area("Client name",   value=f.get('clientName',''),  height=fh(f.get('clientName','')),  key="e_cn")
+        client_email = st.text_area("Client email",  value=f.get('clientEmail',''), height=fh(f.get('clientEmail','')), key="e_ce")
+        site_address = st.text_area("Site address",  value=f.get('siteAddress',''), height=fh(f.get('siteAddress','')), key="e_sa")
+        dear         = st.text_area("Dear",          value=f.get('dear',''),        height=fh(f.get('dear','')),        key="e_dr")
+        scope        = st.text_area("Scope of works",value=f.get('scope',''),       height=fh(f.get('scope','')),       key="e_sc")
 
         works_paras = f.get('worksDescription', [])
         if isinstance(works_paras, str):
             works_paras = [p.strip() for p in works_paras.split('\n') if p.strip()]
-
         updated_works = []
         for i, para in enumerate(works_paras):
-            updated = st.text_area(
-                f"Works description — paragraph {i+1}",
-                value=para,
-                height=field_height(para),
-                key=f"e_wd_{i}")
+            updated = st.text_area(f"Works description — paragraph {i+1}",
+                value=para, height=fh(para), key=f"e_wd_{i}")
             updated_works.append(updated)
 
         guarantee = st.text_area("Guarantee (leave blank if not applicable)",
@@ -436,15 +403,15 @@ with right:
     st.markdown("<span class='field-label'>Preview</span>", unsafe_allow_html=True)
 
     if st.session_state.fields is None:
-        st.markdown(f"""<div class="preview-empty" style="height:{dict_height + 60}px;">
+        # Match height of estimator dropdown + dictation box + button row
+        preview_h = DICT_HEIGHT + 108
+        st.markdown(f"""<div class="preview-empty" style="height:{preview_h}px;">
             Your letter preview will appear here</div>""", unsafe_allow_html=True)
     else:
         f = st.session_state.fields
         est = ESTIMATORS.get(f.get('estimatorName',''), {'initials':'??','email':''})
         render_preview(f, est)
-
         st.markdown("<br>", unsafe_allow_html=True)
-
         if st.session_state.docx_bytes is None:
             if st.button("Generate Word Document", key="generate"):
                 with st.spinner("Building your Word document…"):
