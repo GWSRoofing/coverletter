@@ -28,7 +28,7 @@ html, body, [class*="css"] { font-family: 'Source Sans 3', sans-serif; }
     color: #1a2744;
     margin: 0;
     padding-top: 28px;
-    padding-left: 0;
+    padding-left: 10px;
     line-height: 1.2;
     display: block;
 }
@@ -305,7 +305,7 @@ api_key = os.environ.get("ANTHROPIC_API_KEY", "")
 today = date.today().strftime('%d/%m/%Y')
 
 # ── Header — logo left, title centre-right ────────────────────────────────────
-col_logo, col_title = st.columns([1, 3])
+col_logo, col_title = st.columns([1, 2])
 with col_logo:
     st.image("GWS Roofing Logo.jpg", width=160)
 with col_title:
@@ -333,10 +333,12 @@ with left:
             "Works description — Main body of letter. Say \"new paragraph\" to split sections.\n"
             "Guarantee — Only mention if applicable"))
 
-    # Buttons: ~4/5 and ~1/5 width
-    col_process, col_reset = st.columns([4, 1])
+    # Buttons: Process with AI left, Reset right-aligned
+    col_process, col_gap, col_reset = st.columns([3, 1, 1])
     with col_process:
         process_btn = st.button("Process with AI", key="process")
+    with col_gap:
+        st.empty()
     with col_reset:
         reset_btn = st.button("Reset", key="reset")
 
@@ -404,7 +406,7 @@ with right:
 
     if st.session_state.fields is None:
         # Match height of estimator dropdown + dictation box + button row
-        preview_h = DICT_HEIGHT + 108
+        preview_h = DICT_HEIGHT + 78
         st.markdown(f"""<div class="preview-empty" style="height:{preview_h}px;">
             Your letter preview will appear here</div>""", unsafe_allow_html=True)
     else:
