@@ -4,21 +4,100 @@ import json, re, os, shutil, tempfile, zipfile
 from pathlib import Path
 from lxml import etree
 import defusedxml.minidom
+from datetime import date
 
-st.set_page_config(page_title="GWS Cover Letter", page_icon="🏠", layout="wide")
+st.set_page_config(page_title="GWS Cover Letter Generator", page_icon="🏠", layout="wide")
 
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;500;600;700&display=swap');
+
 html, body, [class*="css"] { font-family: 'Source Sans 3', sans-serif; }
-.gws-header { background:#1a2744; color:white; padding:18px 28px; border-radius:10px; margin-bottom:24px; }
-.gws-logo { background:#c0392b; color:white; width:44px; height:44px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; font-family:'Libre Baskerville',serif; font-weight:700; font-size:.9rem; margin-right:14px; vertical-align:middle; }
-.gws-title { font-family:'Libre Baskerville',serif; font-size:1.3rem; font-weight:700; display:inline; vertical-align:middle; }
-.preview-box { background:white; border:1px solid #d5d0c8; border-radius:10px; padding:28px 32px; font-size:.92rem; line-height:1.75; }
-.preview-site { font-weight:700; text-decoration:underline; }
-.hint-box { background:white; border:1px solid #d5d0c8; border-left:4px solid #1a2744; border-radius:8px; padding:14px 18px; font-size:.82rem; color:#5a5550; line-height:1.7; margin-bottom:16px; }
-.stButton>button { background:#1a2744 !important; color:white !important; border:none !important; border-radius:8px !important; font-weight:500 !important; width:100% !important; }
-.stButton>button:hover { background:#243456 !important; }
+
+.block-container { padding-top: 2rem; }
+
+.app-title {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 1.85rem;
+    font-weight: 700;
+    color: #1a2744;
+    margin: 0;
+    padding-top: 22px;
+    margin-left: -20px;
+}
+
+.field-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #6b7280;
+    margin-bottom: 4px;
+    margin-top: 12px;
+}
+
+.preview-box {
+    background: #f8f9fb;
+    border: 1px solid #e2e4e8;
+    border-radius: 8px;
+    padding: 28px 32px;
+    font-size: 0.9rem;
+    line-height: 1.8;
+    min-height: 500px;
+}
+
+.preview-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 500px;
+    color: #9ca3af;
+    font-style: italic;
+    font-size: 0.88rem;
+}
+
+.preview-site { font-weight: 700; text-decoration: underline; }
+
+.preview-label { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; color: #9ca3af; margin-bottom: 2px; }
+
+hr { border: none; border-top: 1px solid #e5e7eb; margin: 10px 0; }
+
+div[data-testid="stTextArea"] textarea {
+    font-family: 'Source Sans 3', sans-serif !important;
+    font-size: 0.88rem !important;
+}
+
+.stButton > button {
+    background: #1a2744 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 6px !important;
+    font-family: 'Source Sans 3', sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 0.88rem !important;
+    letter-spacing: 0.02em !important;
+    padding: 10px 20px !important;
+    width: 100% !important;
+    transition: background 0.15s !important;
+}
+
+.stButton > button:hover { background: #243456 !important; }
+
+.stSelectbox label, .stTextArea label, .stTextInput label {
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+    color: #6b7280 !important;
+}
+
+div[data-testid="stSelectbox"] > div > div {
+    border-color: #e2e4e8 !important;
+    border-radius: 6px !important;
+}
+
+.section-divider { border: none; border-top: 1px solid #e5e7eb; margin: 16px 0; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -36,9 +115,10 @@ AI_SYSTEM = """You process dictated cover letter text for GWS Roofing.
 Extract and lightly refine fields — fix grammar/punctuation minimally, preserve meaning.
 Convert contractions to formal (it's to it is). Ignore filler phrases and self-corrections.
 Return ONLY raw JSON, no markdown, no explanation.
-Rules: date=DD/MM/YYYY, clientName=title case, siteAddress=title case, dear=salutation name only,
+Rules: clientName=title case, siteAddress=title case, dear=salutation name only (first name),
 scope=sentence case, worksDescription=array split on "new paragraph", guarantee=string or null.
-Return exactly: {"date":"","clientName":"","clientEmail":"","siteAddress":"","dear":"","scope":"","worksDescription":["p1","p2"],"guarantee":null}"""
+Do NOT extract or include date — it will be set automatically.
+Return exactly: {"clientName":"","clientEmail":"","siteAddress":"","dear":"","scope":"","worksDescription":["p1","p2"],"guarantee":null}"""
 
 def _pretty_print_xml(xml_file):
     try:
@@ -76,7 +156,6 @@ def pack_docx(in_dir, out_path):
     for f in in_path.rglob('*.rels'):
         _condense_xml(f)
     all_files = [f for f in in_path.rglob('*') if f.is_file()]
-    # [Content_Types].xml must be first entry in the zip for Word compatibility
     content_types = [f for f in all_files if f.name == '[Content_Types].xml']
     others = [f for f in all_files if f.name != '[Content_Types].xml']
     with zipfile.ZipFile(out_path, 'w', zipfile.ZIP_DEFLATED) as zf:
@@ -194,134 +273,174 @@ def process_with_ai(text, api_key):
     raw = response.content[0].text.replace('```json','').replace('```','').strip()
     return json.loads(raw)
 
-for k in ['fields','confirmed','docx_bytes','filename']:
+def render_preview(f, est):
+    wps = f.get('worksDescription', [])
+    if isinstance(wps, str):
+        wps = [p.strip() for p in wps.split('\n') if p.strip()]
+    works_html = ''.join(f'<p style="margin-bottom:10px">{p}</p>' for p in wps)
+    guar_html = f'<p>{f["guarantee"]}</p>' if f.get('guarantee') else ''
+    st.markdown(f"""<div class="preview-box">
+        <p>{est['initials']}/Ali</p>
+        <p>{f.get('date','')}</p><br>
+        <p>{f.get('clientName','')}</p>
+        <p>Email: {f.get('clientEmail','')}</p><br>
+        <p>Re: <span class="preview-site">{f.get('siteAddress','')}</span></p><br>
+        <p>Dear {f.get('dear','')}</p><br>
+        <p><strong>Scope of work:</strong> {f.get('scope','')}</p><br>
+        {works_html}{guar_html}<br>
+        <p>Regards,</p><br>
+        <p>{f.get('estimatorName','')}</p>
+        <p><strong>Email:</strong> {est.get('email','')}</p>
+    </div>""", unsafe_allow_html=True)
+
+# ── Session state ─────────────────────────────────────────────────────────────
+for k in ['fields', 'docx_bytes', 'filename']:
     if k not in st.session_state:
         st.session_state[k] = None
 
+api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+today = date.today().strftime('%d/%m/%Y')
+
+# ── Header ────────────────────────────────────────────────────────────────────
 col_logo, col_title = st.columns([1, 3])
 with col_logo:
     st.image("GWS Roofing Logo.jpg", width=180)
 with col_title:
-    st.markdown("<h2 style='color:#1a2744; font-family:Libre Baskerville,serif; padding-top:18px; margin-left:-40px;'>Cover Letter</h2>", unsafe_allow_html=True)
+    st.markdown("<p class='app-title'>Cover Letter Generator</p>", unsafe_allow_html=True)
 
-left, right = st.columns([1,1], gap='large')
+st.markdown("<hr class='section-divider'>", unsafe_allow_html=True)
+
+# ── Main layout ───────────────────────────────────────────────────────────────
+left, right = st.columns([1, 1], gap='large')
 
 with left:
-    st.markdown("#### Letter Details")
-    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
-        
-    st.divider()
-    mode = st.radio("Input method",
-        ["🎤 Dictate", "✏️ Fill fields manually"],
-        horizontal=True, label_visibility="collapsed")
-    st.divider()
+    # Estimator
+    st.markdown("<div class='field-label'>Estimator</div>", unsafe_allow_html=True)
+    estimator = st.selectbox("Estimator", list(ESTIMATORS.keys()),
+                             label_visibility="collapsed")
 
-    if mode == "🎤 Dictate":
+    # Dictation
+    st.markdown("<div class='field-label'>Dictation</div>", unsafe_allow_html=True)
+    dictation = st.text_area("Dictation", height=260, label_visibility="collapsed",
+        placeholder=(
+            "Client name — Full name/s, with title where appropriate (Mr/Mrs/Miss/Ms)\n"
+            "Client email — Spell out if unusual\n"
+            "Site address — Include postcode\n"
+            "Dear — First name only (e.g. \"Dear Daniel\")\n"
+            "Scope of works — Headline description of areas covered\n"
+            "Works description — Main body of letter. Say \"new paragraph\" to split sections.\n"
+            "Guarantee — Only mention if applicable"))
 
-        estimator = st.selectbox("Estimator", list(ESTIMATORS.keys()))
-        dictation = st.text_area("Dictation", height=260, label_visibility="collapsed",
-            placeholder=(
-                "Date — Any format, AI converts to DD/MM/YYYY\n"
-                "Client name — Full name/s, with title where appropriate (Mr/Mrs/Miss/Ms)\n"
-                "Client email — Spell out if unusual\n"
-                "Site address — Include postcode\n"
-                "Dear — First name only (e.g. \"Dear Daniel\")\n"
-                "Scope of works — Headline description of areas covered\n"
-                "Works description — Main body of letter. Say \"new paragraph\" to split sections.\n"
-                "Guarantee — Only mention if applicable"))
-        if st.button("✨ Process with AI"):
-            if not api_key:
-                st.error("Please enter your Anthropic API key.")
-            elif not dictation.strip():
-                st.error("Please enter your dictation.")
-            else:
-                with st.spinner("AI is processing your dictation…"):
-                    try:
-                        parsed = process_with_ai(dictation, api_key)
-                        parsed['estimatorName'] = estimator
-                        st.session_state.fields = parsed
-                        st.session_state.confirmed = False
-                        st.session_state.docx_bytes = None
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"AI error: {e}")
-    else:
-        estimator = st.selectbox("Estimator", list(ESTIMATORS.keys()))
-        c1, c2 = st.columns(2)
-        with c1:
-            date         = st.text_input("Date (DD/MM/YYYY)", placeholder="22/04/2026")
-            client_name  = st.text_input("Client name", placeholder="Mr John Smith")
-            site_address = st.text_input("Site address", placeholder="12 Oak Lane, London W5 3AB")
-            scope        = st.text_input("Scope of works", placeholder="Full re-roof in plain tile")
-        with c2:
-            client_email = st.text_input("Client email", placeholder="john@example.com")
-            dear         = st.text_input("Dear", placeholder="Mr Smith")
-            guarantee    = st.text_input("Guarantee (optional)", placeholder="10-year workmanship guarantee")
-        works = st.text_area("Works description (blank line between paragraphs)", height=140,
-            placeholder="First paragraph.\n\nSecond paragraph.\n\nThird paragraph.")
-        if st.button("👁 Preview Letter"):
-            st.session_state.fields = {
-                'estimatorName': estimator, 'date': date,
-                'clientName': client_name, 'clientEmail': client_email,
-                'siteAddress': site_address, 'dear': dear, 'scope': scope,
-                'worksDescription': [p.strip() for p in works.split('\n\n') if p.strip()],
-                'guarantee': guarantee or None,
-            }
-            st.session_state.confirmed = False
+    col_process, col_reset = st.columns(2)
+    with col_process:
+        process_btn = st.button("✦ Process with AI", key="process")
+    with col_reset:
+        reset_btn = st.button("Reset", key="reset")
+
+    if reset_btn:
+        st.session_state.fields = None
+        st.session_state.docx_bytes = None
+        st.session_state.filename = None
+        st.rerun()
+
+    if process_btn:
+        if not dictation.strip():
+            st.error("Please enter your dictation.")
+        else:
+            with st.spinner("Processing your dictation…"):
+                try:
+                    parsed = process_with_ai(dictation, api_key)
+                    parsed['estimatorName'] = estimator
+                    parsed['date'] = today
+                    st.session_state.fields = parsed
+                    st.session_state.docx_bytes = None
+                    st.session_state.filename = None
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"AI error: {e}")
+
+    # ── Editable fields (appear after processing) ─────────────────────────────
+    if st.session_state.fields is not None:
+        f = st.session_state.fields
+        st.markdown("<hr class='section-divider'>", unsafe_allow_html=True)
+
+        client_name  = st.text_area("Client name",
+            value=f.get('clientName',''),
+            height=max(68, len(f.get('clientName','')) // 40 * 24 + 68),
+            key="e_clientName")
+        client_email = st.text_area("Client email",
+            value=f.get('clientEmail',''),
+            height=max(68, len(f.get('clientEmail','')) // 40 * 24 + 68),
+            key="e_clientEmail")
+        site_address = st.text_area("Site address",
+            value=f.get('siteAddress',''),
+            height=max(68, len(f.get('siteAddress','')) // 40 * 24 + 68),
+            key="e_siteAddress")
+        dear         = st.text_area("Dear",
+            value=f.get('dear',''),
+            height=max(68, len(f.get('dear','')) // 40 * 24 + 68),
+            key="e_dear")
+        scope        = st.text_area("Scope of works",
+            value=f.get('scope',''),
+            height=max(68, len(f.get('scope','')) // 40 * 24 + 68),
+            key="e_scope")
+
+        # Works description — one text area per paragraph
+        works_paras = f.get('worksDescription', [])
+        if isinstance(works_paras, str):
+            works_paras = [p.strip() for p in works_paras.split('\n') if p.strip()]
+
+        updated_works = []
+        for i, para in enumerate(works_paras):
+            updated = st.text_area(
+                f"Works description — paragraph {i+1}",
+                value=para,
+                height=max(68, (len(para) // 60 + 1) * 28 + 20),
+                key=f"e_works_{i}")
+            updated_works.append(updated)
+
+        guarantee = st.text_area("Guarantee (leave blank if not applicable)",
+            value=f.get('guarantee') or '',
+            height=68,
+            key="e_guarantee")
+
+        if st.button("Update preview", key="update_preview"):
+            st.session_state.fields['clientName']       = client_name
+            st.session_state.fields['clientEmail']      = client_email
+            st.session_state.fields['siteAddress']      = site_address
+            st.session_state.fields['dear']             = dear
+            st.session_state.fields['scope']            = scope
+            st.session_state.fields['worksDescription'] = updated_works
+            st.session_state.fields['guarantee']        = guarantee or None
             st.session_state.docx_bytes = None
             st.rerun()
 
 with right:
-    st.markdown("#### Preview")
+    st.markdown("<div class='field-label'>Preview</div>", unsafe_allow_html=True)
+
     if st.session_state.fields is None:
-        st.markdown("""<div class="preview-box" style="min-height:400px;display:flex;
-            align-items:center;justify-content:center;color:#a09890;font-style:italic;">
+        st.markdown("""<div class="preview-box preview-empty">
             Your letter preview will appear here</div>""", unsafe_allow_html=True)
     else:
         f = st.session_state.fields
         est = ESTIMATORS.get(f.get('estimatorName',''), {'initials':'??','email':''})
-        wps = f.get('worksDescription', [])
-        if isinstance(wps, str):
-            wps = [p.strip() for p in wps.split('\n') if p.strip()]
-        works_html = ''.join(f'<p style="margin-bottom:10px">{p}</p>' for p in wps)
-        guar_html  = f'<p>{f["guarantee"]}</p>' if f.get('guarantee') else ''
+        render_preview(f, est)
 
-        st.markdown(f"""<div class="preview-box">
-            <p>{est['initials']}/Ali</p><p>{f.get('date','')}</p><br>
-            <p>{f.get('clientName','')}</p>
-            <p>Email: {f.get('clientEmail','')}</p><br>
-            <p>Re: <span class="preview-site">{f.get('siteAddress','')}</span></p><br>
-            <p>Dear {f.get('dear','')}</p><br>
-            <p><strong>Scope of work:</strong> {f.get('scope','')}</p><br>
-            {works_html}{guar_html}<br>
-            <p>Regards,</p><br>
-            <p>{f.get('estimatorName','')}</p>
-            <p><strong>Email:</strong> {est.get('email','')}</p>
-        </div>""", unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
 
-        st.divider()
-
-        if not st.session_state.confirmed:
-            ca, cb = st.columns(2)
-            with ca:
-                if st.button("✅ Confirm & Generate Word Doc"):
-                    with st.spinner("Building your Word document…"):
-                        try:
-                            docx_bytes = build_docx(f, f.get('estimatorName',''))
-                            addr = re.sub(r'[^\w\s]','', f.get('siteAddress','document')).strip()
-                            fname = f"GWS letter {addr}.docx"
-                            st.session_state.docx_bytes = docx_bytes
-                            st.session_state.filename = fname
-                            st.session_state.confirmed = True
-                            st.rerun()
-                        except Exception as e:
-                            st.error(f"Document error: {e}")
-            with cb:
-                if st.button("✏️ Edit"):
-                    st.session_state.fields = None
-                    st.rerun()
-
-        if st.session_state.confirmed and st.session_state.docx_bytes:
+        if st.session_state.docx_bytes is None:
+            if st.button("✦ Generate Word Document", key="generate"):
+                with st.spinner("Building your Word document…"):
+                    try:
+                        docx_bytes = build_docx(f, f.get('estimatorName',''))
+                        addr = re.sub(r'[^\w\s]','', f.get('siteAddress','document')).strip()
+                        fname = f"GWS letter {addr}.docx"
+                        st.session_state.docx_bytes = docx_bytes
+                        st.session_state.filename = fname
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Document error: {e}")
+        else:
             st.success("✅ Document ready!")
             st.download_button(
                 label=f"⬇ Download {st.session_state.filename}",
@@ -330,7 +449,4 @@ with right:
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 use_container_width=True
             )
-            if st.button("↺ New letter"):
-                for k in ['fields','confirmed','docx_bytes','filename']:
-                    st.session_state[k] = None
-                st.rerun()
+
