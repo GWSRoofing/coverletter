@@ -305,7 +305,7 @@ api_key = os.environ.get("ANTHROPIC_API_KEY", "")
 today = date.today().strftime('%d/%m/%Y')
 
 # ── Header — logo left, title centre-right ────────────────────────────────────
-col_logo, col_title = st.columns([1, 2.2])
+col_logo, col_title = st.columns([1, 1.5])
 with col_logo:
     st.image("GWS Roofing Logo.jpg", width=160)
 with col_title:
@@ -333,7 +333,7 @@ with left:
             "Works description — Main body of letter. Say \"new paragraph\" to split sections.\n"
             "Guarantee — Only mention if applicable"))
 
-    process_btn = st.button("Process with AI", key="process")
+    process_btn = st.button("Process with AI", key="process", use_container_width=True)
     reset_btn = False
 
     if process_btn:
@@ -394,7 +394,7 @@ with right:
 
     if st.session_state.fields is None:
         # Match height of estimator dropdown + dictation box + button row
-        preview_h = DICT_HEIGHT + 78
+        preview_h = DICT_HEIGHT + 130
         st.markdown(f"""<div class="preview-empty" style="height:{preview_h}px;">
             Your letter preview will appear here</div>""", unsafe_allow_html=True)
     else:
