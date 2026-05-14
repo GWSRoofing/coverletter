@@ -305,7 +305,7 @@ api_key = os.environ.get("ANTHROPIC_API_KEY", "")
 today = date.today().strftime('%d/%m/%Y')
 
 # ── Header — logo left, title centre-right ────────────────────────────────────
-col_logo, col_title = st.columns([1, 2])
+col_logo, col_title = st.columns([1, 2.2])
 with col_logo:
     st.image("GWS Roofing Logo.jpg", width=160)
 with col_title:
@@ -333,20 +333,8 @@ with left:
             "Works description — Main body of letter. Say \"new paragraph\" to split sections.\n"
             "Guarantee — Only mention if applicable"))
 
-    # Buttons: Process with AI left, Reset right-aligned
-    col_process, col_gap, col_reset = st.columns([3, 1, 1])
-    with col_process:
-        process_btn = st.button("Process with AI", key="process")
-    with col_gap:
-        st.empty()
-    with col_reset:
-        reset_btn = st.button("Reset", key="reset")
-
-    if reset_btn:
-        st.session_state.fields = None
-        st.session_state.docx_bytes = None
-        st.session_state.filename = None
-        st.rerun()
+    process_btn = st.button("Process with AI", key="process")
+    reset_btn = False
 
     if process_btn:
         if not dictation.strip():
