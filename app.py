@@ -14,90 +14,112 @@ st.markdown("""
 
 html, body, [class*="css"] { font-family: 'Source Sans 3', sans-serif; }
 
-.block-container { padding-top: 2rem; }
+.block-container {
+    padding-top: 1.5rem !important;
+    padding-left: 3rem !important;
+    padding-right: 3rem !important;
+}
 
+/* Title */
 .app-title {
     font-family: 'Source Sans 3', sans-serif;
-    font-size: 1.85rem;
+    font-size: 2rem;
     font-weight: 700;
     color: #1a2744;
     margin: 0;
-    padding-top: 22px;
-    margin-left: -20px;
+    padding: 0;
+    line-height: 1.2;
 }
 
+/* Field labels */
 .field-label {
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     color: #6b7280;
-    margin-bottom: 4px;
-    margin-top: 12px;
+    margin-bottom: 6px;
+    margin-top: 0;
+    display: block;
 }
 
+/* Preview box */
 .preview-box {
     background: #f8f9fb;
     border: 1px solid #e2e4e8;
-    border-radius: 8px;
+    border-radius: 6px;
     padding: 28px 32px;
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     line-height: 1.8;
-    min-height: 500px;
 }
 
 .preview-empty {
+    background: #f8f9fb;
+    border: 1px solid #e2e4e8;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 500px;
     color: #9ca3af;
     font-style: italic;
-    font-size: 0.88rem;
+    font-size: 0.85rem;
 }
 
 .preview-site { font-weight: 700; text-decoration: underline; }
 
-.preview-label { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.1em;
-    text-transform: uppercase; color: #9ca3af; margin-bottom: 2px; }
-
-hr { border: none; border-top: 1px solid #e5e7eb; margin: 10px 0; }
-
-div[data-testid="stTextArea"] textarea {
-    font-family: 'Source Sans 3', sans-serif !important;
-    font-size: 0.88rem !important;
+/* Divider */
+.divider {
+    border: none;
+    border-top: 1px solid #e5e7eb;
+    margin: 12px 0 20px 0;
 }
 
+/* Buttons — match quote generator exactly */
 .stButton > button {
     background: #1a2744 !important;
     color: white !important;
     border: none !important;
-    border-radius: 6px !important;
+    border-radius: 5px !important;
     font-family: 'Source Sans 3', sans-serif !important;
     font-weight: 600 !important;
-    font-size: 0.88rem !important;
-    letter-spacing: 0.02em !important;
-    padding: 10px 20px !important;
+    font-size: 0.95rem !important;
+    padding: 12px 20px !important;
     width: 100% !important;
-    transition: background 0.15s !important;
 }
 
 .stButton > button:hover { background: #243456 !important; }
 
-.stSelectbox label, .stTextArea label, .stTextInput label {
-    font-size: 0.72rem !important;
-    font-weight: 600 !important;
-    letter-spacing: 0.08em !important;
+/* Input labels */
+.stSelectbox > label,
+.stTextArea > label,
+.stTextInput > label {
+    font-size: 0.7rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.1em !important;
     text-transform: uppercase !important;
     color: #6b7280 !important;
 }
 
-div[data-testid="stSelectbox"] > div > div {
+/* Text area and select styling */
+div[data-testid="stTextArea"] textarea,
+div[data-testid="stTextInput"] input {
+    font-family: 'Source Sans 3', sans-serif !important;
+    font-size: 0.88rem !important;
     border-color: #e2e4e8 !important;
-    border-radius: 6px !important;
+    border-radius: 5px !important;
+    color: #374151 !important;
 }
 
-.section-divider { border: none; border-top: 1px solid #e5e7eb; margin: 16px 0; }
+div[data-testid="stSelectbox"] > div > div {
+    border-color: #e2e4e8 !important;
+    border-radius: 5px !important;
+    font-size: 0.88rem !important;
+}
+
+/* Remove extra spacing */
+div[data-testid="stVerticalBlock"] > div { gap: 0.4rem; }
+
+.section-divider { border: none; border-top: 1px solid #e5e7eb; margin: 14px 0; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -304,24 +326,27 @@ today = date.today().strftime('%d/%m/%Y')
 # ── Header ────────────────────────────────────────────────────────────────────
 col_logo, col_title = st.columns([1, 3])
 with col_logo:
-    st.image("GWS Roofing Logo.jpg", width=180)
+    st.image("GWS Roofing Logo.jpg", width=130)
 with col_title:
     st.markdown("<p class='app-title'>Cover Letter Generator</p>", unsafe_allow_html=True)
 
-st.markdown("<hr class='section-divider'>", unsafe_allow_html=True)
+st.markdown("<hr class='divider'>", unsafe_allow_html=True)
 
 # ── Main layout ───────────────────────────────────────────────────────────────
 left, right = st.columns([1, 1], gap='large')
 
 with left:
-    # Estimator
-    st.markdown("<div class='field-label'>Estimator</div>", unsafe_allow_html=True)
+    st.markdown("<span class='field-label'>Estimator</span>", unsafe_allow_html=True)
     estimator = st.selectbox("Estimator", list(ESTIMATORS.keys()),
                              label_visibility="collapsed")
 
-    # Dictation
-    st.markdown("<div class='field-label'>Dictation</div>", unsafe_allow_html=True)
-    dictation = st.text_area("Dictation", height=260, label_visibility="collapsed",
+    st.markdown("<span class='field-label'>Dictation</span>", unsafe_allow_html=True)
+
+    # Calculate preview height to match right column
+    # Base dictation box height
+    dict_height = 310
+
+    dictation = st.text_area("Dictation", height=dict_height, label_visibility="collapsed",
         placeholder=(
             "Client name — Full name/s, with title where appropriate (Mr/Mrs/Miss/Ms)\n"
             "Client email — Spell out if unusual\n"
@@ -333,7 +358,7 @@ with left:
 
     col_process, col_reset = st.columns(2)
     with col_process:
-        process_btn = st.button("✦ Process with AI", key="process")
+        process_btn = st.button("Process with AI", key="process")
     with col_reset:
         reset_btn = st.button("Reset", key="reset")
 
@@ -359,33 +384,27 @@ with left:
                 except Exception as e:
                     st.error(f"AI error: {e}")
 
-    # ── Editable fields (appear after processing) ─────────────────────────────
+    # ── Editable fields ───────────────────────────────────────────────────────
     if st.session_state.fields is not None:
         f = st.session_state.fields
         st.markdown("<hr class='section-divider'>", unsafe_allow_html=True)
 
-        client_name  = st.text_area("Client name",
-            value=f.get('clientName',''),
-            height=max(68, len(f.get('clientName','')) // 40 * 24 + 68),
-            key="e_clientName")
-        client_email = st.text_area("Client email",
-            value=f.get('clientEmail',''),
-            height=max(68, len(f.get('clientEmail','')) // 40 * 24 + 68),
-            key="e_clientEmail")
-        site_address = st.text_area("Site address",
-            value=f.get('siteAddress',''),
-            height=max(68, len(f.get('siteAddress','')) // 40 * 24 + 68),
-            key="e_siteAddress")
-        dear         = st.text_area("Dear",
-            value=f.get('dear',''),
-            height=max(68, len(f.get('dear','')) // 40 * 24 + 68),
-            key="e_dear")
-        scope        = st.text_area("Scope of works",
-            value=f.get('scope',''),
-            height=max(68, len(f.get('scope','')) // 40 * 24 + 68),
-            key="e_scope")
+        def field_height(text, min_h=68):
+            chars = len(text or '')
+            rows = max(1, chars // 55 + 1)
+            return max(min_h, rows * 28 + 20)
 
-        # Works description — one text area per paragraph
+        client_name  = st.text_area("Client name",
+            value=f.get('clientName',''), height=field_height(f.get('clientName','')), key="e_cn")
+        client_email = st.text_area("Client email",
+            value=f.get('clientEmail',''), height=field_height(f.get('clientEmail','')), key="e_ce")
+        site_address = st.text_area("Site address",
+            value=f.get('siteAddress',''), height=field_height(f.get('siteAddress','')), key="e_sa")
+        dear         = st.text_area("Dear",
+            value=f.get('dear',''), height=field_height(f.get('dear','')), key="e_dr")
+        scope        = st.text_area("Scope of works",
+            value=f.get('scope',''), height=field_height(f.get('scope','')), key="e_sc")
+
         works_paras = f.get('worksDescription', [])
         if isinstance(works_paras, str):
             works_paras = [p.strip() for p in works_paras.split('\n') if p.strip()]
@@ -395,14 +414,12 @@ with left:
             updated = st.text_area(
                 f"Works description — paragraph {i+1}",
                 value=para,
-                height=max(68, (len(para) // 60 + 1) * 28 + 20),
-                key=f"e_works_{i}")
+                height=field_height(para),
+                key=f"e_wd_{i}")
             updated_works.append(updated)
 
         guarantee = st.text_area("Guarantee (leave blank if not applicable)",
-            value=f.get('guarantee') or '',
-            height=68,
-            key="e_guarantee")
+            value=f.get('guarantee') or '', height=68, key="e_gu")
 
         if st.button("Update preview", key="update_preview"):
             st.session_state.fields['clientName']       = client_name
@@ -416,10 +433,10 @@ with left:
             st.rerun()
 
 with right:
-    st.markdown("<div class='field-label'>Preview</div>", unsafe_allow_html=True)
+    st.markdown("<span class='field-label'>Preview</span>", unsafe_allow_html=True)
 
     if st.session_state.fields is None:
-        st.markdown("""<div class="preview-box preview-empty">
+        st.markdown(f"""<div class="preview-empty" style="height:{dict_height + 60}px;">
             Your letter preview will appear here</div>""", unsafe_allow_html=True)
     else:
         f = st.session_state.fields
@@ -429,7 +446,7 @@ with right:
         st.markdown("<br>", unsafe_allow_html=True)
 
         if st.session_state.docx_bytes is None:
-            if st.button("✦ Generate Word Document", key="generate"):
+            if st.button("Generate Word Document", key="generate"):
                 with st.spinner("Building your Word document…"):
                     try:
                         docx_bytes = build_docx(f, f.get('estimatorName',''))
